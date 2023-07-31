@@ -34,6 +34,7 @@ use curv::cryptographic_primitives::proofs::sigma_valid_pedersen::PedersenProof;
 use curv::cryptographic_primitives::secret_sharing::feldman_vss::VerifiableSS;
 use curv::elliptic::curves::{secp256_k1::Secp256k1, Point, Scalar};
 use paillier::*;
+use secp256k1::ecdsa::Signature;
 use sha2::Sha256;
 use zk_paillier::zkproofs::DLogStatement;
 
@@ -156,7 +157,7 @@ fn keygen_t_n_parties(
         Vec<SharedKeys>,
         Vec<Point<Secp256k1>>,
         Point<Secp256k1>,
-        VerifiableSS<Secp256k1>,
+        VerifiableSS<Secp256k1, Sha256>,
         Vec<EncryptionKey>,
         Vec<DLogStatement>,
     ),
@@ -709,7 +710,7 @@ fn sign(
 }
 
 fn check_sig(r: &Scalar<Secp256k1>, s: &Scalar<Secp256k1>, msg: &BigInt, pk: &Point<Secp256k1>) {
-    use secp256k1::{Message, PublicKey, Signature, SECP256K1};
+    use secp256k1::{Message, PublicKey, SECP256K1};
 
     let raw_msg = BigInt::to_bytes(msg);
     let mut msg: Vec<u8> = Vec::new(); // padding
@@ -743,7 +744,7 @@ fn check_sig(r: &Scalar<Secp256k1>, s: &Scalar<Secp256k1>, msg: &BigInt, pk: &Po
 
     let secp_sig = Signature::from_compact(compact.as_slice()).unwrap();
 
-    let is_correct = SECP256K1.verify(&msg, &secp_sig, &pk).is_ok();
+    let is_correct = SECP256K1.verify_ecdsa(&msg, &secp_sig, &pk).is_ok();
     assert!(is_correct);
 }
 #[test]

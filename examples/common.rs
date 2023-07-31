@@ -13,6 +13,7 @@ use curv::{
 };
 
 use reqwest::Client;
+use secp256k1::ecdsa::Signature;
 use serde::{Deserialize, Serialize};
 
 pub type Key = String;
@@ -195,7 +196,7 @@ pub fn check_sig(
     msg: &BigInt,
     pk: &Point<Secp256k1>,
 ) {
-    use secp256k1::{Message, PublicKey, Signature, SECP256K1};
+    use secp256k1::{Message, PublicKey, SECP256K1};
 
     let raw_msg = BigInt::to_bytes(msg);
     let mut msg: Vec<u8> = Vec::new(); // padding
@@ -220,6 +221,6 @@ pub fn check_sig(
 
     let secp_sig = Signature::from_compact(compact.as_slice()).unwrap();
 
-    let is_correct = SECP256K1.verify(&msg, &secp_sig, &pk).is_ok();
+    let is_correct = SECP256K1.verify_ecdsa(&msg, &secp_sig, &pk).is_ok();
     assert!(is_correct);
 }
