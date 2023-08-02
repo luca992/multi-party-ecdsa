@@ -35,7 +35,7 @@ serde = { version = "1.0", features = ["derive"] }
 zeroize = "1"
 curv-kzen = { git = "https://github.com/luca992/curv.git", branch = "wasm-rand-upgrade", default-features = false }
 centipede = { version = "0.3", default-features = false }
-zk-paillier = { version = "0.4.3", default-features = false }
+zk-paillier = { git = "https://github.com/luca992/zk-paillier.git", branch = "rand-upgrade", default-features = false }
 round-based = { version = "0.1.4", features = [] }
 thiserror = "1.0.23"
 derivative = "2"
