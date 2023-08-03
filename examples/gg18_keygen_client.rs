@@ -17,6 +17,7 @@ use paillier::EncryptionKey;
 use reqwest::Client;
 use sha2::Sha256;
 use std::{env, fs, time};
+use std::error::Error;
 
 mod common;
 use common::{
@@ -24,7 +25,8 @@ use common::{
     PartySignup, AEAD, AES_KEY_BYTES_LEN,
 };
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     if env::args().nth(3).is_some() {
         panic!("too many arguments")
     }
@@ -48,7 +50,7 @@ fn main() {
     };
 
     //signup:
-    let (party_num_int, uuid) = match signup(&client).unwrap() {
+    let (party_num_int, uuid) = match signup(&client).await.unwrap() {
         PartySignup { number, uuid } => (number, uuid),
     };
     println!("number: {:?}, uuid: {:?}", party_num_int, uuid);
@@ -63,7 +65,7 @@ fn main() {
         "round1",
         serde_json::to_string(&bc_i).unwrap(),
         uuid.clone()
-    )
+    ).await
     .is_ok());
     let round1_ans_vec = poll_for_broadcasts(
         &client,
@@ -72,7 +74,7 @@ fn main() {
         delay,
         "round1",
         uuid.clone(),
-    );
+    ).await;
 
     let mut bc1_vec = round1_ans_vec
         .iter()
@@ -88,7 +90,7 @@ fn main() {
         "round2",
         serde_json::to_string(&decom_i).unwrap(),
         uuid.clone()
-    )
+    ).await
     .is_ok());
     let round2_ans_vec = poll_for_broadcasts(
         &client,
@@ -97,7 +99,7 @@ fn main() {
         delay,
         "round2",
         uuid.clone(),
-    );
+    ).await;
 
     let mut j = 0;
     let mut point_vec: Vec<Point<Secp256k1>> = Vec::new();
@@ -147,7 +149,7 @@ fn main() {
                 "round3",
                 serde_json::to_string(&aead_pack_i).unwrap(),
                 uuid.clone()
-            )
+            ).await
             .is_ok());
             j += 1;
         }
@@ -160,7 +162,7 @@ fn main() {
         delay,
         "round3",
         uuid.clone(),
-    );
+    ).await;
 
     let mut j = 0;
     let mut party_shares: Vec<Scalar<Secp256k1>> = Vec::new();
@@ -186,7 +188,7 @@ fn main() {
         "round4",
         serde_json::to_string(&vss_scheme).unwrap(),
         uuid.clone()
-    )
+    ).await
     .is_ok());
     let round4_ans_vec = poll_for_broadcasts(
         &client,
@@ -195,7 +197,7 @@ fn main() {
         delay,
         "round4",
         uuid.clone(),
-    );
+    ).await;
 
     let mut j = 0;
     let mut vss_scheme_vec: Vec<VerifiableSS<Secp256k1, Sha256>> = Vec::new();
@@ -227,10 +229,10 @@ fn main() {
         "round5",
         serde_json::to_string(&dlog_proof).unwrap(),
         uuid.clone()
-    )
+    ).await
     .is_ok());
     let round5_ans_vec =
-        poll_for_broadcasts(&client, party_num_int, PARTIES, delay, "round5", uuid);
+        poll_for_broadcasts(&client, party_num_int, PARTIES, delay, "round5", uuid).await;
 
     let mut j = 0;
     let mut dlog_proof_vec: Vec<DLogProof<Secp256k1, Sha256>> = Vec::new();
@@ -261,11 +263,12 @@ fn main() {
     ))
     .unwrap();
     fs::write(env::args().nth(2).unwrap(), keygen_json).expect("Unable to save !");
+    Ok(())
 }
 
-pub fn signup(client: &Client) -> Result<PartySignup, ()> {
+pub async fn signup(client: &Client) -> Result<PartySignup, ()> {
     let key = "signup-keygen".to_string();
 
-    let res_body = postb(client, "signupkeygen", key).unwrap();
+    let res_body = postb(client, "signupkeygen", key).await.unwrap();
     serde_json::from_str(&res_body).unwrap()
 }

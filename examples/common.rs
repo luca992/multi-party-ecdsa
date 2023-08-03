@@ -79,7 +79,7 @@ pub fn aes_decrypt(key: &[u8], aead_pack: AEAD) -> Vec<u8> {
     out.unwrap()
 }
 
-pub fn postb<T>(client: &Client, path: &str, body: T) -> Option<String>
+pub async fn postb<T>(client: &Client, path: &str, body: T) -> Option<String>
 where
     T: serde::ser::Serialize,
 {
@@ -92,17 +92,17 @@ where
         let res = client
             .post(&format!("{}/{}", addr, path))
             .json(&body)
-            .send();
+            .send().await;
 
         if let Ok(mut res) = res {
-            return Some(res.text().unwrap());
+            return Some(res.text().await.unwrap());
         }
         thread::sleep(retry_delay);
     }
     None
 }
 
-pub fn broadcast(
+pub async fn broadcast(
     client: &Client,
     party_num: u16,
     round: &str,
@@ -112,11 +112,11 @@ pub fn broadcast(
     let key = format!("{}-{}-{}", party_num, round, sender_uuid);
     let entry = Entry { key, value: data };
 
-    let res_body = postb(client, "set", entry).unwrap();
+    let res_body = postb(client, "set", entry).await.unwrap();
     serde_json::from_str(&res_body).unwrap()
 }
 
-pub fn sendp2p(
+pub async fn sendp2p(
     client: &Client,
     party_from: u16,
     party_to: u16,
@@ -128,11 +128,11 @@ pub fn sendp2p(
 
     let entry = Entry { key, value: data };
 
-    let res_body = postb(client, "set", entry).unwrap();
+    let res_body = postb(client, "set", entry).await.unwrap();
     serde_json::from_str(&res_body).unwrap()
 }
 
-pub fn poll_for_broadcasts(
+pub async fn poll_for_broadcasts(
     client: &Client,
     party_num: u16,
     n: u16,
@@ -148,7 +148,7 @@ pub fn poll_for_broadcasts(
             loop {
                 // add delay to allow the server to process request:
                 thread::sleep(delay);
-                let res_body = postb(client, "get", index.clone()).unwrap();
+                let res_body = postb(client, "get", index.clone()).await.unwrap();
                 let answer: Result<Entry, ()> = serde_json::from_str(&res_body).unwrap();
                 if let Ok(answer) = answer {
                     ans_vec.push(answer.value);
@@ -161,7 +161,7 @@ pub fn poll_for_broadcasts(
     ans_vec
 }
 
-pub fn poll_for_p2p(
+pub async fn poll_for_p2p(
     client: &Client,
     party_num: u16,
     n: u16,
@@ -177,7 +177,7 @@ pub fn poll_for_p2p(
             loop {
                 // add delay to allow the server to process request:
                 thread::sleep(delay);
-                let res_body = postb(client, "get", index.clone()).unwrap();
+                let res_body = postb(client, "get", index.clone()).await.unwrap();
                 let answer: Result<Entry, ()> = serde_json::from_str(&res_body).unwrap();
                 if let Ok(answer) = answer {
                     ans_vec.push(answer.value);
@@ -224,3 +224,5 @@ pub fn check_sig(
     let is_correct = SECP256K1.verify_ecdsa(&msg, &secp_sig, &pk).is_ok();
     assert!(is_correct);
 }
+
+fn main() {}
