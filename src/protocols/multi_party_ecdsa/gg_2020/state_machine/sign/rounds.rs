@@ -668,7 +668,7 @@ impl CompletedOfflineStage {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct PartialSignature(Scalar<Secp256k1>);
+pub struct PartialSignature(pub Scalar<Secp256k1>);
 
 #[derive(Clone)]
 pub struct Round7 {
