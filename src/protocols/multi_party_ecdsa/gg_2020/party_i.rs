@@ -262,7 +262,14 @@ impl Keys {
         params: &Parameters,
         decom_vec: &[KeyGenDecommitMessage1],
         bc1_vec: &[KeyGenBroadcastMessage1],
-    ) -> Result<(VerifiableSS<Secp256k1, Sha256>, Vec<Scalar<Secp256k1>>, usize), ErrorType> {
+    ) -> Result<
+        (
+            VerifiableSS<Secp256k1, Sha256>,
+            Vec<Scalar<Secp256k1>>,
+            usize,
+        ),
+        ErrorType,
+    > {
         let mut bad_actors_vec = Vec::new();
         // test length:
         assert_eq!(decom_vec.len(), usize::from(params.share_count));
@@ -868,6 +875,16 @@ impl LocalSignature {
             s_i,
             m: message.clone(),
             y: pubkey.clone(),
+        }
+    }
+
+    pub fn add_partial_signatures(&self, s_vec: &[Scalar<Secp256k1>]) -> Self {
+        Self {
+            r: self.r.clone(),
+            R: self.R.clone(),
+            s_i: s_vec.iter().fold(self.s_i.clone(), |acc, x| acc + x),
+            m: self.m.clone(),
+            y: self.y.clone(),
         }
     }
 
