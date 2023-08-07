@@ -691,6 +691,16 @@ impl Round7 {
         Ok((Self { local_signature }, partial))
     }
 
+    pub fn proceed_manual_append(
+        self,
+        sigs: &[PartialSignature],
+    ) -> Result<(Self, PartialSignature)> {
+        let sigs = sigs.iter().map(|s_i| s_i.0.clone()).collect::<Vec<_>>();
+        let local_signature = self.local_signature.add_partial_signatures(&sigs);
+        let partial = PartialSignature(local_signature.s_i.clone());
+        Ok((Self { local_signature }, partial))
+    }
+
     pub fn proceed_manual(self, sigs: &[PartialSignature]) -> Result<SignatureRecid> {
         let sigs = sigs.iter().map(|s_i| s_i.0.clone()).collect::<Vec<_>>();
         self.local_signature
