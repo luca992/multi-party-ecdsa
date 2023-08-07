@@ -651,6 +651,15 @@ impl SignManual {
 
     /// `sigs` must not include partial signature produced by local party (only partial signatures produced
     /// by other parties)
+    pub fn add(self, sigs: &[PartialSignature]) -> Result<(Self, PartialSignature), SignError> {
+        self.state
+            .proceed_manual_append(sigs)
+            .map(|(state, m)| (Self { state }, m))
+            .map_err(SignError::LocalSigning)
+    }
+
+    /// `sigs` must not include partial signature produced by local party (only partial signatures produced
+    /// by other parties)
     pub fn complete(self, sigs: &[PartialSignature]) -> Result<SignatureRecid, SignError> {
         self.state
             .proceed_manual(sigs)
