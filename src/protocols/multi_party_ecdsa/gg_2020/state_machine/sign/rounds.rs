@@ -650,7 +650,7 @@ impl Round6 {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 #[allow(dead_code)]
 pub struct CompletedOfflineStage {
     i: u16,
